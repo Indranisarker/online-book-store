@@ -554,16 +554,18 @@ textarea {
 .lib-panel {
     margin-top: 10px;
     margin-left: 250px;
-    width: 800px;
+    width: 780px;
     border-radius: 5px;
 }
 .lib-panel img {
-    border: 1px solid black;
-    width: 86%;
+    display: inline-block;
+    padding: 40px;
+    width: 320px;
+    height: 350px;
     background-color: transparent;
-    margin-top: 10px;
-    margin-left: 10px;
-    margin-right: 85px;
+    margin-top: 15px;
+    margin-left: 50px;
+    border: 1px solid #ccc;
 }
 
 .lib-panel .row,

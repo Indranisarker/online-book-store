@@ -23,60 +23,70 @@
                         <br>
                         <input type="text" class="form-control"
                                th:field="${book.name}"
-                               placeholder="Enter Book Name" id="name" required>
+                               placeholder="Enter Book Name" id="name">
+                        <span th:if="${#fields.hasErrors('name')}" th:errors="*{name}" style="color: red;float: left;font-size: 15px"></span>
                         <br>
                         <label class="form-label">Author Name</label>
                         <br>
                         <input type="text" class="form-control"
                                th:field="${book.author}"
-                               placeholder="Enter Author Name" id="author" required>
+                               placeholder="Enter Author Name" id="author">
+                        <span th:if="${#fields.hasErrors('author')}" th:errors="*{author}" style="color: red;float: left;font-size: 15px"></span>
                         <br>
                         <label class="form-label">Category</label>
                         <br>
                         <input type="text" class="form-control"
                                th:field="${book.category}"
-                               placeholder="Enter Book Category" id="category" required>
+                               placeholder="Enter Book Category" id="category">
+                        <span th:if="${#fields.hasErrors('category')}" th:errors="*{category}" style="color: red;float: left;font-size: 15px"></span>
                         <br>
                         <label class="form-label">Price</label>
                         <br>
                         <input type="text" class="form-control"
                                th:field="${book.price}"
-                               placeholder="Enter Book Price" id="price" required>
+                               placeholder="Enter Book Price" id="price">
+                        <span th:if="${#fields.hasErrors('price')}" th:errors="*{price}" style="color: red;float: left;font-size: 15px"></span>
                         <br>
                         <label class="form-label">Quantity</label>
                         <br>
                         <input type="text" class="form-control"
                                th:field="${book.quantity}"
-                               placeholder="Enter Book Quantity" id="quantity" required>
+                               placeholder="Enter Book Quantity" id="quantity">
+                        <span th:if="${#fields.hasErrors('quantity')}" th:errors="*{quantity}" style="color: red;float: left;font-size: 15px"></span>
                         <br>
                         <label class="form-label">Book Length</label>
                         <br>
                         <input type="text" class="form-control"
                                th:field="${book.pages}"
-                               placeholder="Enter Number of Pages" id="pages" required>
+                               placeholder="Enter Number of Pages" id="pages">
+                        <span th:if="${#fields.hasErrors('pages')}" th:errors="*{pages}" style="color: red;float: left;font-size: 15px"></span>
                         <br>
                         <label class="form-label">Edition</label>
                         <br>
                         <input type="text" class="form-control"
                                th:field="${book.edition}"
-                               placeholder="Enter Book Edition " id="edition" required>
+                               placeholder="Enter Book Edition " id="edition">
+                        <span th:if="${#fields.hasErrors('edition')}" th:errors="*{edition}" style="color: red;float: left;font-size: 15px"></span>
                         <br>
                         <label class="form-label">Publication</label>
                         <br>
                         <input type="text" class="form-control"
                                th:field="${book.publication}"
-                               placeholder="Enter Publication Name" id="publication" required>
+                               placeholder="Enter Publication Name" id="publication">
+                        <span th:if="${#fields.hasErrors('publication')}" th:errors="*{publication}" style="color: red;float: left;font-size: 15px"></span>
                         <br>
                         <label class="form-label">ISBN</label>
                         <br>
                         <input type="text" class="form-control"
                                th:field="${book.ISBN}"
-                               placeholder="Enter ISBN Number" id="ISBN" required>
+                               placeholder="Enter ISBN Number" id="ISBN">
+                        <span th:if="${#fields.hasErrors('ISBN')}" th:errors="*{ISBN}" style="color: red;float: left;font-size: 15px"></span>
                         <br>
                         <label class="form-label">Image</label>
                         <input type="file"
                                class="form-control"
                                th:field="${book.image}" name="image" accept="image/*" required>
+                        <small>Maximum file size: 10MB</small>
                         <br>
                         <div class="box-footer">
                             <button type="submit" class="button">Save</button>

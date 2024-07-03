@@ -7,11 +7,13 @@ import com.example.Online.Book.Store.service.LoginService;
 import com.example.Online.Book.Store.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -57,7 +59,11 @@ public class LoginController {
 
     public static boolean success;
     @PostMapping("/register-user")
-    public String registerUser(@ModelAttribute("user")UserDTO userDTO, Model model){
+    public String registerUser(@Valid @ModelAttribute("user")UserDTO userDTO, BindingResult bindingResult, Model model){
+       if(bindingResult.hasErrors()){
+           System.out.println("Validation errors occurred");
+           return "register";
+       }
         model.addAttribute("user", userDTO);
         success = loginService.createUser(userDTO);
         model.addAttribute("message", "Registration Successfully Complete!");

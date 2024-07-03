@@ -7,13 +7,17 @@ import com.example.Online.Book.Store.repository.OrderDetailsRepository;
 import com.example.Online.Book.Store.repository.UserRepository;
 import com.example.Online.Book.Store.service.CustomUserDetailsService;
 import com.example.Online.Book.Store.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.Banner;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -38,8 +42,24 @@ public class UserController {
     @Autowired
     private BooksRepository booksRepository;
 
+    public User getCartValue(Model model){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email).get();
+        if (user != null) {
+            int cartItemCount = userService.getCartItemsCount(user);
+            model.addAttribute("cartItemCount", cartItemCount);
+        } else {
+            model.addAttribute("cartItemCount", 0); // Default to 0 if user not found or cart is empty
+        }
+        return user;
+    }
+
     @GetMapping("/view-books")
-    public String getAllBook(@RequestParam(required = false) Long orderId, Model model, Principal principal) {
+    public String getAllBook(@RequestParam(required = false) Long orderId,
+                             @RequestParam(defaultValue = "name") String sortBy,
+                             @RequestParam(defaultValue = "asc") String sortDirection,
+                             Model model, Principal principal) {
         String userEmail = principal.getName(); // Get the email from Principal
         // Load user details using email (assuming email is used as username)
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(userEmail);
@@ -60,7 +80,7 @@ public class UserController {
         else {
             model.addAttribute("cartItemCount", 0); // Default to 0 if user not found or cart is empty
         }
-        return getBooks(1, model);
+        return getBooks(1,orderId, sortBy, sortDirection, model);
     }
     private int calculateStartSerialForPage(int pageNo) {
         int pageSize = 3;
@@ -69,20 +89,22 @@ public class UserController {
 
 
     @GetMapping("/view-books/page/{pageNo}")
-    public String getBooks(@PathVariable("pageNo") int pageNo, Model model){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email).get();
-        if (user != null) {
-            int cartItemCount = userService.getCartItemsCount(user);
-            model.addAttribute("cartItemCount", cartItemCount);
-        } else {
-            model.addAttribute("cartItemCount", 0); // Default to 0 if user not found or cart is empty
+    public String getBooks(@PathVariable("pageNo") int pageNo,
+                           @RequestParam(required = false) Long orderId,
+                           @RequestParam(defaultValue = "name") String sortBy,
+                           @RequestParam(defaultValue = "asc") String sortDirection,
+                           Model model){
+        User user = getCartValue(model);
+        if (orderId == null) {
+            // Generate or retrieve an orderId for the user
+            OrderDetails order = userService.getOrCreateOrderForUser(user);
+            orderId = order.getOrder_id();
         }
+        model.addAttribute("orderId", orderId);
         int pageSize = 3;
         int startSerial = calculateStartSerialForPage(pageNo);
         model.addAttribute("startSerial", startSerial);
-        Page<Book> bookPage = userService.getBook(pageNo,pageSize);
+        Page<Book> bookPage = userService.getBook(pageNo,pageSize, sortBy, sortDirection);
         List<Book> books = bookPage.getContent();
         List<BookDTO> bookModels = books.stream().map(BookDTO::bookEntityToDTO).toList();
         model.addAttribute("currentPage", pageNo);
@@ -94,18 +116,10 @@ public class UserController {
     @GetMapping("/search")
     public String search(@RequestParam(value = "keyword", required = false) String keyword, Model model) {
         BookDTO book = null;
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email).get();
+        User user = getCartValue(model);
         if (keyword != null && !keyword.isEmpty()) {
             book = userService.searchBooks(keyword);
             model.addAttribute("bookId",book.getId());
-        }
-        if (user != null) {
-            int cartItemCount = userService.getCartItemsCount(user);
-            model.addAttribute("cartItemCount", cartItemCount);
-        } else {
-            model.addAttribute("cartItemCount", 0); // Default to 0 if user not found or cart is empty
         }
         model.addAttribute("user", user);
         model.addAttribute("book", book);
@@ -115,15 +129,7 @@ public class UserController {
     }
     @GetMapping("/book/details/{id}")
     public String bookDetails(@PathVariable("id") Long id, @RequestParam Long orderId, Model model){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email).get();
-        if (user != null) {
-            int cartItemCount = userService.getCartItemsCount(user);
-            model.addAttribute("cartItemCount", cartItemCount);
-        } else {
-            model.addAttribute("cartItemCount", 0); // Default to 0 if user not found or cart is empty
-        }
+        User user = getCartValue(model);
         model.addAttribute("user", user);
         model.addAttribute("book",userService.getBookDetails(id));
         model.addAttribute("orderId",orderId);
@@ -133,33 +139,28 @@ public class UserController {
     }
     @GetMapping("/checkout")
     public String checkOut(@RequestParam("quantity") int quantity, @RequestParam("amount") Float amount, Model model){
-        System.out.println("Quantity: " + quantity);
-        System.out.println("Amount: " + amount);
-
-        // Ensure amount is not null
-        if (amount == null) {
-            amount = 0.0f;
-        }
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email).get();
-        if (user != null) {
-            int cartItemCount = userService.getCartItemsCount(user);
-            model.addAttribute("cartItemCount", cartItemCount);
-        } else {
-            model.addAttribute("cartItemCount", 0); // Default to 0 if user not found or cart is empty
-        }
+        getCartValue(model);
         model.addAttribute("info", new ShippingInfoDTO());
         model.addAttribute("quantity", quantity);
         model.addAttribute("amount", amount);
         return "user/checkout";
     }
     @PostMapping("/add-checkout-details")
-    public String createCheckoutDetails(@ModelAttribute("info") ShippingInfoDTO shippingInfoDTO, @RequestParam("quantity") int quantity, @RequestParam("amount") Float amount, Model model) {
+    public String createCheckoutDetails(@Valid @ModelAttribute("info") ShippingInfoDTO shippingInfoDTO,
+                                        BindingResult bindingResult, @RequestParam("quantity") int quantity,
+                                        @RequestParam("amount") Float amount,
+                                        Model model) {
+        if (bindingResult.hasErrors()) {
+            System.out.println("Validation errors found");
+
+            // Re-populate the model with the necessary attributes for the view
+            model.addAttribute("quantity", quantity);
+            model.addAttribute("amount", amount);
+            getCartValue(model);
+            return "user/checkout";
+        }
         userService.saveCheckoutDetails(shippingInfoDTO);
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userEmail = authentication.getName();
-        User user = userRepository.findByEmail(userEmail).get();
+        User user = getCartValue(model);
         List<Long> cartItemIds = userService.getCartItemIdsForUser(user);
         OrderDetails orderDetails = userService.createOrder(shippingInfoDTO, user.getUser_id(), cartItemIds);
         model.addAttribute("quantity", quantity);
@@ -170,66 +171,33 @@ public class UserController {
 
     @GetMapping("/checkout-details")
     public String checkoutDetails(@RequestParam("quantity") int quantity, @RequestParam("amount") Float amount, Model model){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email).get();
-        if (user != null) {
-            int cartItemCount = userService.getCartItemsCount(user);
-            model.addAttribute("cartItemCount", cartItemCount);
-        } else {
-            model.addAttribute("cartItemCount", 0); // Default to 0 if user not found or cart is empty
-        }
+        User user = getCartValue(model);
         model.addAttribute("quantity", quantity);
         model.addAttribute("amount", amount);
         return "user/checkout-details";
     }
     @GetMapping("/payment")
     public String showPaymentPage(Model model) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email).get();
-        if (user != null) {
-            int cartItemCount = userService.getCartItemsCount(user);
-            model.addAttribute("cartItemCount", cartItemCount);
-        } else {
-            model.addAttribute("cartItemCount", 0); // Default to 0 if user not found or cart is empty
-        }
+        getCartValue(model);
         return "user/payment";
     }
     @PostMapping("/processPayment")
     public String processPayment(Model model, Principal principal){
-        String email = principal.getName();
-        User user = userRepository.findByEmail(email).get();
+        User user = getCartValue(model);
         userService.processCheckout();
         userService.deleteCartItemsByUser(user);
         return "redirect:/user/order-success";
 }
     @GetMapping("/order-success")
     public String showSuccessOrder(Model model){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email).get();
-        if (user != null) {
-            int cartItemCount = userService.getCartItemsCount(user);
-            model.addAttribute("cartItemCount", cartItemCount);
-        } else {
-            model.addAttribute("cartItemCount", 0); // Default to 0 if user not found or cart is empty
-        }
+        getCartValue(model);
         List<CartItem> cartItems = userService.getCartItems();
         model.addAttribute("cartItems", cartItems);
         return "user/order-success";
     }
 @GetMapping("/review")
 public String showReviewForm(Model model) {
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    String email = authentication.getName();
-    User user = userRepository.findByEmail(email).get();
-    if (user != null) {
-        int cartItemCount = userService.getCartItemsCount(user);
-        model.addAttribute("cartItemCount", cartItemCount);
-    } else {
-        model.addAttribute("cartItemCount", 0); // Default to 0 if user not found or cart is empty
-    }
+    User user = getCartValue(model);
     System.out.println("User ID (Security): " + user.getUser_id());
     ServiceReviewDTO serviceReviewDTO = new ServiceReviewDTO();
     serviceReviewDTO.setUser(user);
@@ -239,14 +207,7 @@ public String showReviewForm(Model model) {
 }
     @PostMapping("/add-review/{userId}")
     public String addReview(@PathVariable("userId") Long userId, @ModelAttribute("review") ServiceReviewDTO serviceReviewDTO, Model model){
-        Optional<User> userOptional = userRepository.findById(userId);
-        if (!userOptional.isPresent()) {
-            // Handle the case where the user is not found
-            System.out.printf("user not found");
-            throw new RuntimeException("User not found");
-
-        }
-        User user = userOptional.get();
+        User user = userRepository.findById(userId).get();
         serviceReviewDTO.setUser(user);
         System.out.println("Selected Rating: " + serviceReviewDTO.getRatings()); // Debug statement to verify rating value
         userService.createReviews(userId, serviceReviewDTO);
@@ -256,9 +217,7 @@ public String showReviewForm(Model model) {
     }
     @GetMapping("/book-review/{id}")
     public String showBookReviewForm(@PathVariable("id") Long id, Model model){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email).get();
+        User user = getCartValue(model);
         System.out.println("User ID (Security): " + user.getUser_id());
         BookReviewDTO bookReviewDTO = new BookReviewDTO();
         bookReviewDTO.setUser(user);
@@ -270,18 +229,8 @@ public String showReviewForm(Model model) {
 
     @PostMapping("/add-book-review/{userId}/{bookId}")
     public String createBookReview(@PathVariable("userId") Long userId, @PathVariable("bookId") Long bookId, @ModelAttribute("bookReview")BookReviewDTO bookReviewDTO, Model model){
-        Optional<User> userOptional = userRepository.findById(userId);
-        if (!userOptional.isPresent()) {
-            throw new RuntimeException("User not found");
-
-        }
-        User user = userOptional.get();
-        Optional<Book> bookOptional = booksRepository.findById(bookId);
-        if (!bookOptional.isPresent()) {
-            throw new RuntimeException("Book not found");
-
-        }
-        Book book = bookOptional.get();
+        User user = userRepository.findById(userId).get();
+        Book book = booksRepository.findById(bookId).get();
         bookReviewDTO.setUser(user);
         bookReviewDTO.setBook(book);
         userService.createBookReview(userId,bookId, bookReviewDTO);
@@ -297,19 +246,12 @@ public String showReviewForm(Model model) {
         return "user/book-review-details";
     }
     @GetMapping("/cart")
-    public String viewCart(Model model, Principal principal){
-        String email = principal.getName();
-        User user = userRepository.findByEmail(email).get();
+    public String viewCart(Model model){
+        User user = getCartValue(model);
         List<CartItem> cartItems = userService.getCartItemsForUser(user);
         List<BookDTO> bookDTOs = new ArrayList<>();
         for (CartItem i : cartItems) {
             bookDTOs.add(BookDTO.bookEntityToDTO(i.getBook()));
-        }
-        if (user != null) {
-            int cartItemCount = userService.getCartItemsCount(user);
-            model.addAttribute("cartItemCount", cartItemCount);
-        } else {
-            model.addAttribute("cartItemCount", 0); // Default to 0 if user not found or cart is empty
         }
         model.addAttribute("books", bookDTOs);
         model.addAttribute("user", user);
@@ -322,8 +264,7 @@ public String showReviewForm(Model model) {
                             @ModelAttribute("cartItems") CartItem cartItem, Model model, Principal principal) {
         String email = principal.getName();
         User user1 = userRepository.findByEmail(email).get();
-        Optional<User> userOptional = userRepository.findById(userId);
-        User user = userOptional.get();
+        User user = userRepository.findById(userId).get();
         model.addAttribute("user", user);
         cartItem.setUser(user1);
         userService.addToCart(bookId, userId, orderId);

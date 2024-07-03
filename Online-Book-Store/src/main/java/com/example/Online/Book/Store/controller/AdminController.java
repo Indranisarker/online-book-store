@@ -9,11 +9,13 @@ import com.example.Online.Book.Store.entity.OrderItem;
 import com.example.Online.Book.Store.repository.CartRepository;
 import com.example.Online.Book.Store.service.AdminService;
 import com.example.Online.Book.Store.service.CustomUserDetailsService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -32,8 +34,6 @@ public class AdminController {
     @Autowired
     private CustomUserDetailsService customUserDetailsService;
 
-    @Autowired
-     private CartRepository cartRepository;
     @GetMapping("/customer-review")
     public String review(Model model){
         model.addAttribute("reviews", adminService.getAllReviews());
@@ -84,8 +84,12 @@ public class AdminController {
     }
 
     @PostMapping("/book/create")
-    public String addBook(@ModelAttribute("book") BookDTO bookDTO, Model model,
+    public String addBook(@Valid @ModelAttribute("book") BookDTO bookDTO, BindingResult bindingResult, Model model,
                           RedirectAttributes redirectAttributes) {
+        if(bindingResult.hasErrors()){
+            System.out.println("Validation errors occurred!");
+            return "admin/add-form";
+        }
         model.addAttribute("book", bookDTO);
         adminService.createBook(bookDTO);
         redirectAttributes.addFlashAttribute("message", "New Book Added Successfully!");

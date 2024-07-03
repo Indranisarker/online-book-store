@@ -34,35 +34,40 @@
                         <div class="form-group">
                             <div class="input-group">
                                 <label style="margin-left: 20px">First Name: </label><br>
-                                <input th:field="${user.first_name}" type="text" class="register-form-control" placeholder="Enter First Name" required>
+                                <input th:field="${user.first_name}" type="text" id="first_name" class="register-form-control" placeholder="Enter First Name">
+                                <span th:if="${#fields.hasErrors('first_name')}" th:errors="*{first_name}" style="color: red;margin-left:20px;font-size: 15px"></span>
                             </div>
                         </div>
                         <div class="form-group">
                             <div class="input-group">
                                 <label style="margin-left: 20px">Last Name: </label><br>
-                                <input th:field="${user.last_name}" type="text" class="register-form-control" placeholder="Enter Last Name">
+                                <input th:field="${user.last_name}" type="text" id="last_name" class="register-form-control" placeholder="Enter Last Name">
+                                <span th:if="${#fields.hasErrors('last_name')}" th:errors="*{last_name}" style="color: red;margin-left:20px;font-size: 15px"></span>
                             </div>
                         </div>
                         <div class="form-group">
                             <div class="input-group">
                                 <label style="margin-left: 20px">Email: </label><br>
-                                <input th:field="${user.email}" type="email" class="register-form-control" id="uLogin" placeholder="Enter Email Id" required>
+                                <input th:field="${user.email}" type="text" class="register-form-control" id="email" placeholder="Enter Email Id">
+                                <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" style="color: red;margin-left:20px;font-size: 15px"></span>
                             </div>
                         </div>
 
                         <div class="form-group">
                             <div class="input-group">
                                 <label style="margin-left: 20px">Password: </label><br>
-                                <input th:field="${user.password}" type="password" class="register-form-control" id="uPassword" placeholder="Enter Password" required>
+                                <input th:field="${user.password}" type="password" class="register-form-control" id="password" placeholder="Enter Password">
+                                <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}" style="color: red;margin-left:20px;font-size: 15px"></span>
                             </div>
                         </div>
                         <div class="form-group">
                             <label for="role" style="margin-left: 20px">Role:</label>
-                            <select id="role" name="role" required>
+                            <select id="role" name="role">
                                 <option value="" disabled selected>Select a role</option>
                                 <option value="ADMIN">ADMIN</option>
                                 <option value="USER">USER</option>
                             </select>
+                            <span th:if="${#fields.hasErrors('role')}" th:errors="*{role}" style="color: red;margin-left:20px;font-size: 15px"></span>
                         </div>
                         <div class="wrapper">
             <span class="group-btn">

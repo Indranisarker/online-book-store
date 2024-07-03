@@ -3,13 +3,12 @@ package com.example.Online.Book.Store.service;
 
 import com.example.Online.Book.Store.dto.BookDTO;
 import com.example.Online.Book.Store.entity.Book;
-import com.example.Online.Book.Store.entity.OrderDetails;
 import com.example.Online.Book.Store.entity.OrderItem;
 import com.example.Online.Book.Store.entity.ServiceReview;
 import com.example.Online.Book.Store.repository.BooksRepository;
-import com.example.Online.Book.Store.repository.OrderDetailsRepository;
 import com.example.Online.Book.Store.repository.OrderItemsRepository;
 import com.example.Online.Book.Store.repository.ServiceReviewRepository;
+import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,7 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import java.awt.*;
+
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -27,10 +26,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-
 @Service
 public class AdminService {
     @Autowired
@@ -40,10 +37,8 @@ public class AdminService {
     private ServiceReviewRepository serviceReviewRepository;
 
     @Autowired
-    private OrderDetailsRepository orderDetailsRepository;
-
-    @Autowired
     private OrderItemsRepository itemsRepository;
+
     public Page<Book> getBooks(int pageNo, int pageSize, String sortBy, String sortDirection) {
        Sort sort = sortDirection.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable paging = PageRequest.of(pageNo - 1,pageSize,sort);
@@ -78,14 +73,14 @@ public class AdminService {
 
             // Convert MultipartFile to BufferedImage
             BufferedImage originalImage = ImageIO.read(file.getInputStream());
-
-            // Compress the image
-            BufferedImage compressedImage = compressImage(originalImage);
-
-            // Convert compressed image to byte array
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            ImageIO.write(compressedImage, "jpg", byteArrayOutputStream);
+            Thumbnails.of(originalImage)
+                    .size(200, 200)
+                    .outputFormat("jpg")
+                    .toOutputStream(byteArrayOutputStream);
+            byteArrayOutputStream.flush();
             byte[] imageBytes = byteArrayOutputStream.toByteArray();
+            byteArrayOutputStream.close();
 
             // Create and save the book entity
             Book book = new Book();
@@ -106,19 +101,6 @@ public class AdminService {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    private BufferedImage compressImage(BufferedImage originalImage) {
-        int targetWidth = originalImage.getWidth() / 2;  // Adjust the scaling factor as needed
-        int targetHeight = originalImage.getHeight() / 2;
-
-        Image resultingImage = originalImage.getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH);
-        BufferedImage outputImage = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g2d = outputImage.createGraphics();
-        g2d.drawImage(resultingImage, 0, 0, null);
-        g2d.dispose();
-
-        return outputImage;
     }
 
     public Book updateBook(Long id) {

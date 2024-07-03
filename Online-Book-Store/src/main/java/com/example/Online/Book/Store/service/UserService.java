@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -43,8 +44,9 @@ public class UserService {
     @Autowired
     private OrderDetailsRepository orderRepository;
 
-    public Page<Book> getBook(int pageNo, int pageSize) {
-        Pageable paging = PageRequest.of(pageNo - 1, pageSize);
+    public Page<Book> getBook(int pageNo, int pageSize, String sortBy, String sortDirection) {
+        Sort sort = sortDirection.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable paging = PageRequest.of(pageNo - 1, pageSize, sort);
         return booksRepository.findAll(paging);
     }
 
@@ -132,11 +134,11 @@ public class UserService {
 
 
     public void createBookReview(Long userId, Long bookId, BookReviewDTO bookReviewDTO) {
-        Optional<User> user = userRepository.findById(userId);
-        Optional<Book> book = booksRepository.findById(bookId);
+        User user = userRepository.findById(userId).get();
+        Book book = booksRepository.findById(bookId).get();
         BookReview bookReview = new BookReview();
-        bookReview.setUser(user.get());
-        bookReview.setBook(book.get());
+        bookReview.setUser(user);
+        bookReview.setBook(book);
         bookReview.setRating(bookReviewDTO.getRating());
         bookReview.setReview(bookReviewDTO.getReview());
         bookReview.setCreateDate(new Date());
@@ -230,4 +232,5 @@ public Double getTotalRatingsCount(Long bookId) {
                 .map(cartItem -> cartItem.getCardId())
                 .collect(Collectors.toList());
     }
+
 }
