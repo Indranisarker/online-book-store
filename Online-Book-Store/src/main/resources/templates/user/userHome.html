@@ -14,7 +14,7 @@
     <p>Welcome to The Biggest Network of Book Ordering & Delivery</p>
     <div class="books-container" th:if="${books}">
         <div class="book" th:each="book :${books}">
-            <img th:src="'data:image/jpeg;base64,' + ${book.imageBase64}" alt="Book Image">
+          <img th:src="'data:image/jpeg;base64,' + ${book.imageBase64}" alt="Book Image">
             <h3 th:text="${book.name}"></h3>
             <h4 th:text="${book.author}"></h4>
             <div class="review-rating">
@@ -24,8 +24,14 @@
                 <span class="star">★</span>
                 <span class="star">☆</span>
             </div>
-            <a th:if="${book.id != null}" th:href="@{'/user/book/details/' + ${book.id}  + '?orderId=' + ${orderId}}"><button type = submit class="button">View Details</button></a>
-<!--            <input type="hidden" name="orderId" th:value="${order.order_id}">-->
+            <p th:if="${book.quantity > 0}" style="font-size: 17px">
+                <span style="font-size: 15px; color: #4cae4c"> Product In Stock</span>
+            </p>
+            <p th:if="${book.quantity == 0}" style="font-size: 17px">
+                <span style="font-size: 15px; color: red"> Out Of Stock</span>
+            </p>
+            <a th:if="${book.id != null}" th:href="@{'/user/book/details/' + ${book.id}}"><button type = submit class="button">View Details</button></a>
+            <input type="hidden" name="orderId" th:value="${orderId}">
         </div>
     </div>
 </section>

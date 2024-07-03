@@ -16,10 +16,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -68,9 +65,16 @@ public class UserService {
     }
 
     @Transactional
-    public BookDTO searchBooks(String keyword) {
-        Book book = booksRepository.findBookByNameIgnoreCase(keyword);
-        return book != null ? BookDTO.bookEntityToDTO(book) : null;
+    public List<BookDTO> searchBooks(String keyword) {
+//        Book book = booksRepository.findBookByNameIgnoreCase(keyword);
+            List<Book> books = booksRepository.findBookByNameIgnoreCaseOrCategoryIgnoreCase(keyword);
+           List<BookDTO> bookDTOS = new ArrayList<>();
+            if(books != null){
+                for(Book book : books){
+                    bookDTOS.add( BookDTO.bookEntityToDTO(book));
+                }
+            }
+            return bookDTOS;
     }
 
     @Transactional

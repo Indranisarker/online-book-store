@@ -28,8 +28,9 @@
     </div>
     <div class="search-container">
         <form th:action="@{/user/search}" method="GET">
-            <input type="text" name="keyword" placeholder="Search by name">
-            <input type="hidden" th:if="${bookId != null}" name="bookId" th:value="${bookId}">
+            <input type="text" name="keyword" placeholder="Search by book name or category">
+<!--            <input type="hidden" name="orderId" th:value="${orderId}">-->
+<!--            <input type="hidden" th:if="${bookId != null}" name="bookId" th:value="${bookId}">-->
             <button type="submit"><i class="fa fa-search"></i></button>
         </form>
     </div>

@@ -70,7 +70,6 @@ public class UserController {
             model.addAttribute("cartItemCount", cartItemCount);
 
             if (orderId == null) {
-                // Generate or retrieve an orderId for the user
                 OrderDetails order = userService.getOrCreateOrderForUser(user);
                 orderId = order.getOrder_id();
             }
@@ -114,21 +113,34 @@ public class UserController {
         return "user/userHome";
     }
     @GetMapping("/search")
-    public String search(@RequestParam(value = "keyword", required = false) String keyword, Model model) {
-        BookDTO book = null;
+    public String search(@RequestParam(value = "keyword", required = false) String keyword,
+                         @RequestParam(required = false) Long orderId,Model model){
+        List<BookDTO> books = List.of();
         User user = getCartValue(model);
-        if (keyword != null && !keyword.isEmpty()) {
-            book = userService.searchBooks(keyword);
-            model.addAttribute("bookId",book.getId());
+        if(keyword != null && !keyword.isEmpty()){
+            books = userService.searchBooks(keyword);
+            if (books.size() == 1) {
+                BookDTO book = books.get(0);
+                model.addAttribute("book", book);
+                model.addAttribute("user", user);
+                model.addAttribute("orderId", orderId);
+                model.addAttribute("ratingCount", userService.getTotalRatingsCount(book.getId()));
+                model.addAttribute("reviewCount", userService.getTotalReviewCount(book.getId()));
+                return "user/books-details";
+            }
+        }
+        for(BookDTO book : books){
+            model.addAttribute("book", book);
         }
         model.addAttribute("user", user);
-        model.addAttribute("book", book);
-        model.addAttribute("ratingCount", userService.getTotalRatingsCount(book.getId()));
-        model.addAttribute("reviewCount", userService.getTotalReviewCount(book.getId()));
-        return "user/books-details";
+        model.addAttribute("books",books);
+        model.addAttribute("orderId", orderId);
+        model.addAttribute("startSerial", 0);
+
+        return "user/search-list";
     }
     @GetMapping("/book/details/{id}")
-    public String bookDetails(@PathVariable("id") Long id, @RequestParam Long orderId, Model model){
+    public String bookDetails(@PathVariable("id") Long id, @RequestParam(required = false) Long orderId, Model model){
         User user = getCartValue(model);
         model.addAttribute("user", user);
         model.addAttribute("book",userService.getBookDetails(id));

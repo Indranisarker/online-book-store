@@ -105,7 +105,7 @@ body {
     background: #ccc;
 }
 .cart-item-count {
-    background-color: red;
+    background-color: green;
     color: white;
     font-size: 12px;
     padding: 3px 6px;
@@ -129,10 +129,90 @@ body {
 .navbar-right .signup:hover {
     background-color: #ff3b30;
 }
+
+.list-container {
+    justify-content: center;
+    align-items: center;
+    width: 500px;
+    height: auto;
+    margin: 0 520px 100px;
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.book-list {
+    margin-bottom: 10px;
+}
+
+.book-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.rank {
+    font-size: 20px;
+    margin-right: 10px;
+    color: #333;
+}
+
+.search-book-info {
+    margin-left: 30px;
+    flex-grow: 1;
+}
+
+.search-book-info h3 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.book-info p {
+    margin: 0;
+    color: #666;
+}
+
+.rating {
+    font-size: 16px;
+    color: #f39c12;
+}
+
+.view-all {
+    margin-left: 120px;
+    width: 50%;
+    padding: 10px;
+    background-color: #e53935;
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 5px;
+    text-align: center;
+}
 .homeLogo{
     width: 1230px;
     height: 520px;
     margin-left: 200px;
+}
+.stock {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: #339672;
+    rotate: -45deg;
+    /*border-radius: 40px;*/
+    color: white;
+    padding: 2px 10px;
+    font-size: 17px;
 }
 .books-section {
     margin-left: 100px;
@@ -169,7 +249,7 @@ body {
     border-radius: 15px;
     padding: 20px;
     width: 350px;
-    height: 350px;
+    height: 405px;
     text-align: center;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
@@ -328,7 +408,7 @@ body {
     text-align: center;
     text-decoration: none;
     display: inline-block;
-    margin-top: -2px;
+    margin-top: -50px;
     font-size: 16px;
     border-radius: 10px;
 }
@@ -554,7 +634,7 @@ textarea {
 .lib-panel {
     margin-top: 10px;
     margin-left: 250px;
-    width: 780px;
+    width: 800px;
     border-radius: 5px;
 }
 .lib-panel img {
@@ -563,8 +643,7 @@ textarea {
     width: 320px;
     height: 350px;
     background-color: transparent;
-    margin-top: 15px;
-    margin-left: 50px;
+    margin: 15px 50px 15px;
     border: 1px solid #ccc;
 }
 
@@ -599,6 +678,7 @@ textarea {
     bottom: 10px;
     left: 20px;
 }
+
 
 .row-margin-bottom {
     margin-bottom: 20px;
@@ -917,7 +997,7 @@ footer {
     margin-bottom: 10px;
     font-size: 25px;
     font-weight: bold;
-    font-family: "Times New Roman";
+
 }
 
 .footer-section ul {
