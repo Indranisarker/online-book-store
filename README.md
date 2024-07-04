@@ -29,7 +29,7 @@ This project involves developing an online bookstore that serves two types of us
 
 #### Book Browsing and Searching
 - **Browse Books**: Customers can view books categorized by genre, author, and other criteria.
-- **Search Books**: A search functionality to find books by title.
+- **Search Books**: A search functionality to find books by title and category.
 
 #### Book Details
 - Detailed information about each book, including title, author, description, price, and reviews.
