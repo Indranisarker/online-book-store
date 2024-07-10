@@ -6,6 +6,7 @@ import com.example.Online.Book.Store.dto.ServiceReviewDTO;
 import com.example.Online.Book.Store.dto.ShippingInfoDTO;
 import com.example.Online.Book.Store.entity.*;
 import com.example.Online.Book.Store.repository.*;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -38,8 +39,16 @@ public class UserService {
 
     @Autowired
     private ShippingInfoRepository shippingInfoRepository;
+
     @Autowired
     private OrderDetailsRepository orderRepository;
+
+    @Autowired
+    private ModelMapper modelMapper;
+
+    public ShippingInfoDTO infoToDTO(ShippingInfo shippingInfo){
+        return this.modelMapper.map(shippingInfo, ShippingInfoDTO.class);
+    }
 
     public Page<Book> getBook(int pageNo, int pageSize, String sortBy, String sortDirection) {
         Sort sort = sortDirection.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
@@ -66,12 +75,11 @@ public class UserService {
 
     @Transactional
     public List<BookDTO> searchBooks(String keyword) {
-//        Book book = booksRepository.findBookByNameIgnoreCase(keyword);
             List<Book> books = booksRepository.findBookByNameIgnoreCaseOrCategoryIgnoreCase(keyword);
            List<BookDTO> bookDTOS = new ArrayList<>();
             if(books != null){
                 for(Book book : books){
-                    bookDTOS.add( BookDTO.bookEntityToDTO(book));
+                    bookDTOS.add(BookDTO.bookEntityToDTO(book));
                 }
             }
             return bookDTOS;
@@ -169,13 +177,9 @@ public Double getTotalRatingsCount(Long bookId) {
 
     @Transactional
     public void saveCheckoutDetails(ShippingInfoDTO shippingInfoDTO) {
-        ShippingInfo shippingInfo = new ShippingInfo();
-        shippingInfo.setFull_name(shippingInfoDTO.getFull_name());
-        shippingInfo.setPhone_no(shippingInfoDTO.getPhone_no());
-        shippingInfo.setCity(shippingInfoDTO.getCity());
-        shippingInfo.setAddress(shippingInfoDTO.getAddress());
+        ShippingInfo shippingInfo = this.modelMapper.map(shippingInfoDTO, ShippingInfo.class);
         shippingInfoRepository.save(shippingInfo);
-        ShippingInfoDTO.infoToDTO(shippingInfo);
+        this.infoToDTO(shippingInfo);
     }
 
     @Transactional(readOnly = true)
@@ -194,15 +198,11 @@ public Double getTotalRatingsCount(Long bookId) {
     }
 
     @Transactional
-    public OrderDetails createOrder(ShippingInfoDTO shippingInfo, Long userId, List<Long> cartItemIds) {
+    public OrderDetails createOrder(ShippingInfoDTO shippingInfoDTO, Long userId, List<Long> cartItemIds) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         List<CartItem> cartItems = cartRepository.findAllById(cartItemIds);
 
-        ShippingInfo info = new ShippingInfo();
-        info.setFull_name(shippingInfo.getFull_name());
-        info.setPhone_no(shippingInfo.getPhone_no());
-        info.setCity(shippingInfo.getCity());
-        info.setAddress(shippingInfo.getAddress());
+        ShippingInfo info = this.modelMapper.map(shippingInfoDTO, ShippingInfo.class);
 
         OrderDetails order = new OrderDetails();
         order.setUser(user);
@@ -237,4 +237,14 @@ public Double getTotalRatingsCount(Long bookId) {
                 .collect(Collectors.toList());
     }
 
+    public OrderDetails createOrderForUser(User user) {
+        OrderDetails order = new OrderDetails();
+        order.setUser(user);
+        order.setOrderDate(new Date());
+        return orderRepository.save(order);
+    }
+
+    public OrderDetails getOrderById(Long orderId) {
+        return orderRepository.findById(orderId).get();
+    }
 }

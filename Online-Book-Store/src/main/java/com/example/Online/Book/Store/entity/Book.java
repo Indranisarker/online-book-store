@@ -33,7 +33,7 @@ public class Book {
     private int pages;
     @Min(value = 1, message = "Edition must be at least 1")
     private int edition;
-    @Min(value = 1, message = "Edition must be at least 1")
+    @NotBlank(message = "Publication is mandatory")
     private String publication;
     @Size(min = 5, max = 13, message = "ISBN must be between 5 and 13 characters")
     @Pattern(regexp = "\\d+", message = "ISBN must be numeric")

@@ -3,13 +3,12 @@ package com.example.Online.Book.Store.controller;
 import com.example.Online.Book.Store.dto.*;
 import com.example.Online.Book.Store.entity.*;
 import com.example.Online.Book.Store.repository.BooksRepository;
-import com.example.Online.Book.Store.repository.OrderDetailsRepository;
 import com.example.Online.Book.Store.repository.UserRepository;
 import com.example.Online.Book.Store.service.CustomUserDetailsService;
 import com.example.Online.Book.Store.service.UserService;
 import jakarta.validation.Valid;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.Banner;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,14 +16,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 
 @Controller
@@ -105,7 +102,10 @@ public class UserController {
         model.addAttribute("startSerial", startSerial);
         Page<Book> bookPage = userService.getBook(pageNo,pageSize, sortBy, sortDirection);
         List<Book> books = bookPage.getContent();
-        List<BookDTO> bookModels = books.stream().map(BookDTO::bookEntityToDTO).toList();
+        List<BookDTO> bookModels = new ArrayList<>();
+        for(Book book : books){
+            bookModels.add(BookDTO.bookEntityToDTO(book));
+        }
         model.addAttribute("currentPage", pageNo);
         model.addAttribute("totalPage", bookPage.getTotalPages());
         model.addAttribute("books",bookModels);
@@ -254,6 +254,7 @@ public String showReviewForm(Model model) {
 
     @GetMapping("/review-details/{bookId}")
     public String viewReviews(@PathVariable("bookId") Long bookId, Model model){
+        User user = getCartValue(model);
         model.addAttribute("bookReviews", userService.getBookReviews(bookId));
         return "user/book-review-details";
     }
@@ -272,15 +273,22 @@ public String showReviewForm(Model model) {
         return "user/cart";
     }
     @PostMapping("/cart/add/{userId}")
-    public String addToCart(@PathVariable("userId") Long userId, @RequestParam Long bookId, @RequestParam Long orderId,
+    public String addToCart(@PathVariable("userId") Long userId, @RequestParam Long bookId, @RequestParam(required = false) Long orderId,
                             @ModelAttribute("cartItems") CartItem cartItem, Model model, Principal principal) {
         String email = principal.getName();
         User user1 = userRepository.findByEmail(email).get();
         User user = userRepository.findById(userId).get();
         model.addAttribute("user", user);
         cartItem.setUser(user1);
+        if (orderId == null) {
+            OrderDetails newOrder = userService.createOrderForUser(user);
+            orderId = newOrder.getOrder_id();
+        } else {
+            OrderDetails order = userService.getOrderById(orderId);
+            model.addAttribute("order", order);
+        }
         userService.addToCart(bookId, userId, orderId);
-        return "redirect:/user/view-modal/" + bookId;
+        return "redirect:/user/view-modal/" + bookId + "?orderId=" + orderId;
     }
     @PostMapping("/cart/update/{bookId}")
     public String updateCart(@PathVariable Long bookId, @RequestParam int quantity, RedirectAttributes redirectAttributes) {
@@ -290,8 +298,9 @@ public String showReviewForm(Model model) {
         return "redirect:/user/cart";
     }
     @GetMapping("/view-modal/{id}")
-    public String viewModal(@PathVariable("id") Long id, Model model){
+    public String viewModal(@PathVariable("id") Long id, @RequestParam("orderId") Long orderId, Model model){
         model.addAttribute("book", userService.getBookDetails(id));
+        model.addAttribute("orderId", orderId);
         return "user/cartModalView";
     }
 

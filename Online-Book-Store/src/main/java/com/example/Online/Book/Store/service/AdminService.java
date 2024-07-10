@@ -9,6 +9,7 @@ import com.example.Online.Book.Store.repository.BooksRepository;
 import com.example.Online.Book.Store.repository.OrderItemsRepository;
 import com.example.Online.Book.Store.repository.ServiceReviewRepository;
 import net.coobird.thumbnailator.Thumbnails;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -38,6 +39,9 @@ public class AdminService {
 
     @Autowired
     private OrderItemsRepository itemsRepository;
+
+    @Autowired
+    private ModelMapper modelMapper;
 
     public Page<Book> getBooks(int pageNo, int pageSize, String sortBy, String sortDirection) {
        Sort sort = sortDirection.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
