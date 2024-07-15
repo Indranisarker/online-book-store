@@ -23,6 +23,8 @@ import java.nio.file.Paths;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @Controller
@@ -42,8 +44,17 @@ public class AdminController {
 
     @GetMapping("/order-details")
     public String ShowAllOrders(Model model){
-        List<OrderItem> detailsList = adminService.getAllOrders();
-        model.addAttribute("orderList", detailsList);
+        List<OrderItem> orderItems = adminService.getAllOrders();
+        List<OrderDetails> orderList = adminService.getAllOrderDetails();
+        double totalAmount = 0;
+        for(OrderItem order: orderItems){
+            totalAmount += order.getBook().getPrice() * order.getQuantity();
+
+        }
+        double orderTotalAmounts = totalAmount + 48;
+        model.addAttribute("totalAmount", orderTotalAmounts);
+        model.addAttribute("orderList", orderList);
+        model.addAttribute("orderItems", orderItems);
         return "admin/order-details";
     }
 
@@ -98,22 +109,20 @@ public class AdminController {
 
     @GetMapping("/book-update-id/{id}")
     public String viewUpdateBook(@PathVariable("id") Long id, Model model) {
-        model.addAttribute("book", adminService.updateBook(id));
+        Book existingBook = adminService.updateBook(id);
+        model.addAttribute("book", existingBook);
+        if (existingBook.getImagePath() != null) {
+            model.addAttribute("existingImageUrl", Paths.get(existingBook.getImagePath()).getFileName().toString());
+        } else {
+            model.addAttribute("existingImageUrl", null);
+        }
         return "admin/update-form";
     }
 
     @PostMapping("/book/updateBook/{id}")
     public String updateBook(@PathVariable("id") Long id, @ModelAttribute("book") BookDTO bookDTO,
                              Model model, RedirectAttributes redirectAttributes) {
-        Book existingBook = adminService.updateBook(id);
-
         model.addAttribute("book", adminService.updateBookById(id, bookDTO));
-
-        if (existingBook.getImagePath() != null) {
-            model.addAttribute("existingImageUrl", "/uploads/" + Paths.get(existingBook.getImagePath()).getFileName().toString());
-        } else {
-            model.addAttribute("existingImageUrl", null);
-        }
         redirectAttributes.addFlashAttribute("message", "Book Update Successfully!");
         return "redirect:/admin/books";
     }

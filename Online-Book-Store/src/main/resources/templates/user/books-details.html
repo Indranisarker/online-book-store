@@ -12,9 +12,6 @@
 </head>
 <body>
 <link th:include="/user/userNavbar.html">
-<div class="text-center" style="font-size: 20px; font-weight: bold" th:if="${book == null}">
-    No books found!
-</div>
 <div th:if="${book != null}">
     <div class="col-md-1"></div>
     <div class="col-md-5 no-padding lib-item" data-category="ui">
@@ -59,7 +56,7 @@
                     </div>
                     <div class="button-container">
                         <a th:if="${book.id != null}" th:href="@{'/user/book-review/' + ${book.id}}" class="review-button">Add Book Review</a>
-                        <form id="addToCartForm" th:if="${book.quantity != 0 && book.quantity > 1}" th:action="@{'/user/cart/add/' + ${user.user_id}}"  method="POST">
+                        <form id="addToCartForm" th:action="@{'/user/cart/add/' + ${user.user_id}}"  method="POST">
                             <input type="hidden" name="bookId" th:value="${book.id}">
                             <input type="hidden" name="userId" th:value="${user.user_id}">
                             <input type="hidden" name="orderId" th:value="${orderId}">

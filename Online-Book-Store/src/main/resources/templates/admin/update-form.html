@@ -73,9 +73,13 @@
                                th:field="${book.ISBN}"
                                placeholder="Enter ISBN Number" id="ISBN" required>
                         <br>
+                        <div>
+                            <label style="text-align: left">Current Image: </label>
+                            <span th:text="${existingImageUrl}"></span>
                         <input type="file"
                                class="form-control"
-                               th:field="${book.image}" name="image" accept="image/*" required>
+                               th:field="${book.image}" name="image" accept="image/*">
+                        </div>
                         <br>
                         <div class="box-footer">
                             <button type="submit" class="button">Update</button>

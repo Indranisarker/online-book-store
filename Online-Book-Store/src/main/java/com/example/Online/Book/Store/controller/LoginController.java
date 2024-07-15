@@ -56,16 +56,14 @@ public class LoginController {
         }
         return "register";
     }
-
-    public static boolean success;
     @PostMapping("/register-user")
-    public String registerUser(@Valid @ModelAttribute("user")UserDTO userDTO, BindingResult bindingResult, Model model){
+    public String registerUser(@Valid @ModelAttribute("user") UserDTO userDTO, BindingResult bindingResult, Model model){
        if(bindingResult.hasErrors()){
            System.out.println("Validation errors occurred");
            return "register";
        }
         model.addAttribute("user", userDTO);
-        success = loginService.createUser(userDTO);
+        loginService.createUser(userDTO);
         model.addAttribute("message", "Registration Successfully Complete!");
         return "redirect:/user-login";
     }

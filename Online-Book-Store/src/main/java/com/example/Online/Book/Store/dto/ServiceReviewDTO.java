@@ -19,13 +19,4 @@ public class ServiceReviewDTO {
     private User user;
     @Temporal(TemporalType.TIMESTAMP)
     private Date createTime;
-
-    public static ServiceReviewDTO reviewEntityToDTO(ServiceReview serviceReview){
-        ServiceReviewDTO serviceReviewDTO = new ServiceReviewDTO();
-        serviceReviewDTO.setUser(serviceReview.getUser());
-        serviceReviewDTO.setRatings(serviceReview.getRatings());
-        serviceReviewDTO.setComments(serviceReview.getComments());
-        serviceReviewDTO.setCreateTime(serviceReview.getCreateTime());
-        return serviceReviewDTO;
-    }
 }

@@ -46,8 +46,20 @@ public class UserService {
     @Autowired
     private ModelMapper modelMapper;
 
-    public ShippingInfoDTO infoToDTO(ShippingInfo shippingInfo){
-        return this.modelMapper.map(shippingInfo, ShippingInfoDTO.class);
+    public void infoToDTO(ShippingInfo shippingInfo){
+         modelMapper.map(shippingInfo, ShippingInfoDTO.class);
+    }
+    public BookDTO bookEntityToDTO(Book book){
+        BookDTO bookDTO = modelMapper.map(book, BookDTO.class);
+        bookDTO.setImageBase64(Base64.getEncoder().encodeToString(book.getImage()));
+        return bookDTO;
+    }
+
+    public void reviewEntityToDTO(ServiceReview serviceReview){
+         modelMapper.map(serviceReview, ServiceReviewDTO.class);
+    }
+    public void bookReviewEntityToDTO(BookReview bookReview){
+         modelMapper.map(bookReview,BookReviewDTO.class);
     }
 
     public Page<Book> getBook(int pageNo, int pageSize, String sortBy, String sortDirection) {
@@ -57,20 +69,16 @@ public class UserService {
     }
 
     public BookDTO getBookDetails(Long id) {
-        Optional<Book> book = booksRepository.findById(id);
-        Book b = book.get();
-        return BookDTO.bookEntityToDTO(b);
+        Book book = booksRepository.findById(id).get();
+        return this.bookEntityToDTO(book);
     }
 
     public void createReviews(Long userId, ServiceReviewDTO serviceReviewDTO) {
-        Optional<User> user = userRepository.findById(userId);
-        ServiceReview serviceReview = new ServiceReview();
-        serviceReview.setUser(user.get());
-        serviceReview.setRatings(serviceReviewDTO.getRatings());
-        serviceReview.setComments(serviceReviewDTO.getComments());
+        userRepository.findById(userId).get();
+        ServiceReview serviceReview = modelMapper.map(serviceReviewDTO, ServiceReview.class);
         serviceReview.setCreateTime(new Date());
         serviceReviewRepository.save(serviceReview);
-        ServiceReviewDTO.reviewEntityToDTO(serviceReview);
+        this.reviewEntityToDTO(serviceReview);
     }
 
     @Transactional
@@ -79,7 +87,7 @@ public class UserService {
            List<BookDTO> bookDTOS = new ArrayList<>();
             if(books != null){
                 for(Book book : books){
-                    bookDTOS.add(BookDTO.bookEntityToDTO(book));
+                    bookDTOS.add(this.bookEntityToDTO(book));
                 }
             }
             return bookDTOS;
@@ -114,11 +122,9 @@ public class UserService {
         cartItem.setUser(user);
         cartItem.setOrder(order);
         CartItem savedItem = cartRepository.save(cartItem);
-        BookDTO.bookEntityToDTO(savedItem.getBook());
+        this.bookEntityToDTO(savedItem.getBook());
 
     }
-
-
     @Transactional
     public void updateCartItem(Long bookId, int quantity) {
         CartItem cartItem = cartRepository.findByBookId(bookId);
@@ -146,16 +152,12 @@ public class UserService {
 
 
     public void createBookReview(Long userId, Long bookId, BookReviewDTO bookReviewDTO) {
-        User user = userRepository.findById(userId).get();
-        Book book = booksRepository.findById(bookId).get();
-        BookReview bookReview = new BookReview();
-        bookReview.setUser(user);
-        bookReview.setBook(book);
-        bookReview.setRating(bookReviewDTO.getRating());
-        bookReview.setReview(bookReviewDTO.getReview());
+        userRepository.findById(userId).get();
+        booksRepository.findById(bookId).get();
+        BookReview bookReview = modelMapper.map(bookReviewDTO,BookReview.class);
         bookReview.setCreateDate(new Date());
         bookReviewRepository.save(bookReview);
-        BookReviewDTO.bookReviewEntityToDTO(bookReview);
+        this.bookReviewEntityToDTO(bookReview);
     }
 
     public int getTotalReviewCount(Long bookId) {

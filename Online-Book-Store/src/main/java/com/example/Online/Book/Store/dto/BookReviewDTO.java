@@ -21,14 +21,4 @@ public class BookReviewDTO {
     private Date createDate;
     private User user;
     private Book book;
-
-    public static BookReviewDTO bookReviewEntityToDTO(BookReview bookReview){
-        BookReviewDTO bookReviewDTO = new BookReviewDTO();
-        bookReviewDTO.setRating(bookReview.getRating());
-        bookReviewDTO.setReview(bookReview.getReview());
-        bookReviewDTO.setCreateDate(bookReview.getCreateDate());
-        bookReviewDTO.setUser(bookReview.getUser());
-        bookReviewDTO.setBook(bookReview.getBook());
-        return bookReviewDTO;
-    }
 }

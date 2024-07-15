@@ -37,19 +37,4 @@ public class BookDTO {
     @Size(min = 5, max = 13, message = "ISBN must be between 5 and 13 characters")
     @Pattern(regexp = "\\d+", message = "ISBN must be numeric")
     private String ISBN;
-    public static BookDTO bookEntityToDTO(Book book){
-        BookDTO bookDTO = new BookDTO();
-        bookDTO.setId(book.getId());
-        bookDTO.setName(book.getName());
-        bookDTO.setAuthor(book.getAuthor());
-        bookDTO.setCategory(book.getCategory());
-        bookDTO.setImageBase64(Base64.getEncoder().encodeToString(book.getImage()));
-        bookDTO.setPrice(book.getPrice());
-        bookDTO.setQuantity(book.getQuantity());
-        bookDTO.setPages(book.getPages());
-        bookDTO.setEdition(book.getEdition());
-        bookDTO.setPublication(book.getPublication());
-        bookDTO.setISBN(book.getISBN());
-        return bookDTO;
-    }
 }

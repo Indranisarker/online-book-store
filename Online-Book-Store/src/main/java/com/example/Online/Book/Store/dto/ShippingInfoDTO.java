@@ -24,13 +24,4 @@ public class ShippingInfoDTO {
     @NotBlank(message = "Address is required!")
     private String address;
 
-
-//    public static ShippingInfoDTO infoToDTO(ShippingInfo shippingInfo){
-//        ShippingInfoDTO shippingInfoDTO = new ShippingInfoDTO();
-//        shippingInfoDTO.setFull_name(shippingInfo.getFull_name());
-//        shippingInfoDTO.setPhone_no(shippingInfo.getPhone_no());
-//        shippingInfoDTO.setCity(shippingInfo.getCity());
-//        shippingInfoDTO.setAddress(shippingInfo.getAddress());
-//        return shippingInfoDTO;
-//    }
 }

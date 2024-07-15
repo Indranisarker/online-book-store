@@ -3,13 +3,16 @@ package com.example.Online.Book.Store.service;
 
 import com.example.Online.Book.Store.dto.BookDTO;
 import com.example.Online.Book.Store.entity.Book;
+import com.example.Online.Book.Store.entity.OrderDetails;
 import com.example.Online.Book.Store.entity.OrderItem;
 import com.example.Online.Book.Store.entity.ServiceReview;
 import com.example.Online.Book.Store.repository.BooksRepository;
+import com.example.Online.Book.Store.repository.OrderDetailsRepository;
 import com.example.Online.Book.Store.repository.OrderItemsRepository;
 import com.example.Online.Book.Store.repository.ServiceReviewRepository;
 import net.coobird.thumbnailator.Thumbnails;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.PropertyMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +30,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 @Service
@@ -42,6 +46,14 @@ public class AdminService {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    @Autowired
+    private OrderDetailsRepository detailsRepository;
+
+    public void bookEntityToDTO(Book book){
+         BookDTO bookDTO = modelMapper.map(book, BookDTO.class);
+         bookDTO.setImageBase64(Base64.getEncoder().encodeToString(book.getImage()));
+    }
 
     public Page<Book> getBooks(int pageNo, int pageSize, String sortBy, String sortDirection) {
        Sort sort = sortDirection.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
@@ -85,23 +97,10 @@ public class AdminService {
             byteArrayOutputStream.flush();
             byte[] imageBytes = byteArrayOutputStream.toByteArray();
             byteArrayOutputStream.close();
-
-            // Create and save the book entity
-            Book book = new Book();
-            book.setName(bookDTO.getName());
-            book.setAuthor(bookDTO.getAuthor());
-            book.setCategory(bookDTO.getCategory());
-            book.setImage(imageBytes);
-            book.setImagePath(filePath.toString());
-            book.setPrice(bookDTO.getPrice());
-            book.setQuantity(bookDTO.getQuantity());
-            book.setPages(bookDTO.getPages());
-            book.setEdition(bookDTO.getEdition());
-            book.setPublication(bookDTO.getPublication());
-            book.setISBN(bookDTO.getISBN());
+            Book book = modelMapper.map(bookDTO, Book.class);
 
             Book savedBook = booksRepository.save(book);
-            BookDTO.bookEntityToDTO(savedBook);
+            this.bookEntityToDTO(savedBook);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -118,7 +117,7 @@ public class AdminService {
     }
 
     public BookDTO updateBookById(Long id, BookDTO bookDTO) {
-        Optional<Book> existingBook = booksRepository.findById(id);
+        Book existingBook = booksRepository.findById(id).get();
         Book presentBook = null;
         try {
             if (existingBook == null) {
@@ -149,28 +148,18 @@ public class AdminService {
 
                 // Convert file to byte array
                 byte[] imageBytes = file.getBytes();
-
-                if (existingBook.isPresent()) {
-                    presentBook = existingBook.get();
-                    presentBook.setId(id);
-                    presentBook.setName(bookDTO.getName());
-                    presentBook.setAuthor(bookDTO.getAuthor());
-                    presentBook.setCategory(bookDTO.getCategory());
+                    presentBook = modelMapper.map(bookDTO, Book.class);
                     presentBook.setImage(imageBytes);
                     presentBook.setImagePath(filePath.toString());
-                    presentBook.setPrice(bookDTO.getPrice());
-                    presentBook.setPages(bookDTO.getPages());
-                    presentBook.setEdition(bookDTO.getEdition());
-                    presentBook.setPublication(bookDTO.getPublication());
-                    presentBook.setISBN(bookDTO.getISBN());
                     booksRepository.save(presentBook);
                 }
 
-            }
-            return BookDTO.bookEntityToDTO(presentBook);
+
+             this.bookEntityToDTO(presentBook);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return bookDTO;
     }
 
         public void deleteBookById(Long id) {
@@ -186,4 +175,7 @@ public class AdminService {
         return itemsRepository.findAll();
     }
 
+    public List<OrderDetails> getAllOrderDetails() {
+        return detailsRepository.findAll();
+    }
 }

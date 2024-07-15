@@ -6,8 +6,32 @@ document.addEventListener('DOMContentLoaded', function() {
     $(document).ready(function() {
         const modal = $('#reviewModal');
         const closeButton = $('.close-button');
+        const bookId = $('#bookId').val();
 
         $('#openModalButton').click(function(){
+            modal.show();
+        });
+
+        closeButton.click(function() {
+            closeModal();
+        });
+
+        $(window).click(function(event) {
+            if ($(event.target).is(modal)) {
+                closeModal();
+            }
+        });
+
+        function closeModal() {
+            modal.hide();
+            window.location.href = `/user/book/details/${bookId}`;
+        }
+    });
+    $(document).ready(function() {
+        const modal = $('#addToCartModal');
+        const closeButton = $('.close');
+
+        $('#openModalButton').click(function() {
             modal.show();
         });
 
@@ -26,11 +50,12 @@ document.addEventListener('DOMContentLoaded', function() {
             window.history.back(); // Redirect to the previous page
         }
     });
+    //error modal view
     $(document).ready(function() {
-        const modal = $('#addToCartModal');
-        const closeButton = $('.close');
+        const modal = $('#errorModal');
+        const closeButton = $('.close-button');
 
-        $('#openModalButton').click(function() {
+        $('#openModalButton').click(function(){
             modal.show();
         });
 

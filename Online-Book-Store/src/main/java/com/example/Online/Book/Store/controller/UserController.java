@@ -2,6 +2,7 @@ package com.example.Online.Book.Store.controller;
 
 import com.example.Online.Book.Store.dto.*;
 import com.example.Online.Book.Store.entity.*;
+import com.example.Online.Book.Store.exception.*;
 import com.example.Online.Book.Store.repository.BooksRepository;
 import com.example.Online.Book.Store.repository.UserRepository;
 import com.example.Online.Book.Store.service.CustomUserDetailsService;
@@ -17,10 +18,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 
@@ -39,6 +40,13 @@ public class UserController {
     @Autowired
     private BooksRepository booksRepository;
 
+    @Autowired
+    private ModelMapper modelMapper;
+    public BookDTO bookEntityToDTO(Book book){
+        BookDTO bookDTO = modelMapper.map(book, BookDTO.class);
+        bookDTO.setImageBase64(Base64.getEncoder().encodeToString(book.getImage()));
+        return bookDTO;
+    }
     public User getCartValue(Model model){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
@@ -103,8 +111,8 @@ public class UserController {
         Page<Book> bookPage = userService.getBook(pageNo,pageSize, sortBy, sortDirection);
         List<Book> books = bookPage.getContent();
         List<BookDTO> bookModels = new ArrayList<>();
-        for(Book book : books){
-            bookModels.add(BookDTO.bookEntityToDTO(book));
+        for(Book book:books){
+            bookModels.add(this.bookEntityToDTO(book));
         }
         model.addAttribute("currentPage", pageNo);
         model.addAttribute("totalPage", bookPage.getTotalPages());
@@ -114,12 +122,15 @@ public class UserController {
     }
     @GetMapping("/search")
     public String search(@RequestParam(value = "keyword", required = false) String keyword,
-                         @RequestParam(required = false) Long orderId,Model model){
+                         @RequestParam(required = false) Long orderId,Model model) {
         List<BookDTO> books = List.of();
         User user = getCartValue(model);
         if(keyword != null && !keyword.isEmpty()){
             books = userService.searchBooks(keyword);
-            if (books.size() == 1) {
+            if(books.isEmpty()){
+                throw new BookNotFoundException("Book with this name " + keyword + " is not found!");
+            }
+            else if(books.size() == 1) {
                 BookDTO book = books.get(0);
                 model.addAttribute("book", book);
                 model.addAttribute("user", user);
@@ -164,7 +175,6 @@ public class UserController {
                                         Model model) {
         if (bindingResult.hasErrors()) {
             System.out.println("Validation errors found");
-
             // Re-populate the model with the necessary attributes for the view
             model.addAttribute("quantity", quantity);
             model.addAttribute("amount", amount);
@@ -194,7 +204,7 @@ public class UserController {
         return "user/payment";
     }
     @PostMapping("/processPayment")
-    public String processPayment(Model model, Principal principal){
+    public String processPayment(Model model){
         User user = getCartValue(model);
         userService.processCheckout();
         userService.deleteCartItemsByUser(user);
@@ -210,7 +220,6 @@ public class UserController {
 @GetMapping("/review")
 public String showReviewForm(Model model) {
     User user = getCartValue(model);
-    System.out.println("User ID (Security): " + user.getUser_id());
     ServiceReviewDTO serviceReviewDTO = new ServiceReviewDTO();
     serviceReviewDTO.setUser(user);
     model.addAttribute("review", serviceReviewDTO);
@@ -221,7 +230,6 @@ public String showReviewForm(Model model) {
     public String addReview(@PathVariable("userId") Long userId, @ModelAttribute("review") ServiceReviewDTO serviceReviewDTO, Model model){
         User user = userRepository.findById(userId).get();
         serviceReviewDTO.setUser(user);
-        System.out.println("Selected Rating: " + serviceReviewDTO.getRatings()); // Debug statement to verify rating value
         userService.createReviews(userId, serviceReviewDTO);
         model.addAttribute("user", user);
         model.addAttribute("review", serviceReviewDTO);
@@ -254,8 +262,12 @@ public String showReviewForm(Model model) {
 
     @GetMapping("/review-details/{bookId}")
     public String viewReviews(@PathVariable("bookId") Long bookId, Model model){
-        User user = getCartValue(model);
-        model.addAttribute("bookReviews", userService.getBookReviews(bookId));
+        getCartValue(model);
+        List<BookReview> reviews = userService.getBookReviews(bookId);
+        if(reviews.isEmpty()){
+            throw new BookReviewNotFoundException("No review is found for this  book!");
+        }
+        model.addAttribute("bookReviews",reviews);
         return "user/book-review-details";
     }
     @GetMapping("/cart")
@@ -264,7 +276,7 @@ public String showReviewForm(Model model) {
         List<CartItem> cartItems = userService.getCartItemsForUser(user);
         List<BookDTO> bookDTOs = new ArrayList<>();
         for (CartItem i : cartItems) {
-            bookDTOs.add(BookDTO.bookEntityToDTO(i.getBook()));
+            bookDTOs.add(this.bookEntityToDTO(i.getBook()));
         }
         model.addAttribute("books", bookDTOs);
         model.addAttribute("user", user);
@@ -280,6 +292,10 @@ public String showReviewForm(Model model) {
         User user = userRepository.findById(userId).get();
         model.addAttribute("user", user);
         cartItem.setUser(user1);
+        BookDTO book = userService.getBookDetails(bookId);
+        if(book.getQuantity() == 0){
+            throw new OutOfStockException("The book is out of stock!");
+        }
         if (orderId == null) {
             OrderDetails newOrder = userService.createOrderForUser(user);
             orderId = newOrder.getOrder_id();
@@ -287,14 +303,22 @@ public String showReviewForm(Model model) {
             OrderDetails order = userService.getOrderById(orderId);
             model.addAttribute("order", order);
         }
-        userService.addToCart(bookId, userId, orderId);
-        return "redirect:/user/view-modal/" + bookId + "?orderId=" + orderId;
+        try{
+            userService.addToCart(bookId, userId, orderId);
+            return "redirect:/user/view-modal/" + bookId + "?orderId=" + orderId;
+        }
+        catch (CartServiceUnavailableException ex){
+            throw ex;
+        }
+
     }
     @PostMapping("/cart/update/{bookId}")
-    public String updateCart(@PathVariable Long bookId, @RequestParam int quantity, RedirectAttributes redirectAttributes) {
+    public String updateCart(@PathVariable Long bookId, @RequestParam int quantity) {
+        BookDTO book = userService.getBookDetails(bookId);
+        if(book.getQuantity() < quantity){
+            throw new InsufficientStockException("The requested quantity is not available in stock!");
+        }
          userService.updateCartItem(bookId, quantity);
-        redirectAttributes.addFlashAttribute("message", "Quantity updated successfully!");
-
         return "redirect:/user/cart";
     }
     @GetMapping("/view-modal/{id}")

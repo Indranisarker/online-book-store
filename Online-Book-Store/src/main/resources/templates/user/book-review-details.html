@@ -2,13 +2,17 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Customer Review</title>
+    <title>Book Review</title>
     <link rel="stylesheet" th:href="@{/css/userStyle.css}">
     <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}" type="text/css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
 <link th:include="user/userNavbar.html">
+<!--<div class="text-center" style="font-size: 20px; font-weight: bold" th:if="${bookReviews.size() == 0}">-->
+<!--    No book review is found!-->
+<!--</div>-->
+<div th:if="${bookReviews.size() != 0}">
    <h1 class="text-center">Book Review</h1>
 <div class="review-container" th:each="review : ${bookReviews}">
     <div class="review-header">
@@ -24,7 +28,8 @@
         <span class="star" data-value="4" th:classappend="${review.rating >= 4 ? 'filled' : ''}"><i class="far fa-star"></i></span>
         <span class="star" data-value="5" th:classappend="${review.rating >= 5 ? 'filled' : ''}"><i class="far fa-star"></i></span>
     </div>
-    <div class="review-body" th:text="${review.review}">Awesome book!</div>
+    <div class="review-body" th:text="${review.review}"></div>
+</div>
 </div>
 </body>
 </html>

@@ -56,7 +56,7 @@
                         <div class="form-group">
                             <div class="input-group">
                                 <label style="margin-left: 20px">Password: </label><br>
-                                <input th:field="${user.password}" type="password" class="register-form-control" id="password" placeholder="Enter Password">
+                                <input th:field="${user.password}" type="password" class="register-form-control" id="password" placeholder="Enter Password" minlength="4" maxlength="8">
                                 <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}" style="color: red;margin-left:20px;font-size: 15px"></span>
                             </div>
                         </div>

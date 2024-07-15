@@ -28,13 +28,12 @@ public class UserDTO {
     @NotBlank(message = "Role is required")
     private String role;
 
-    public static UserDTO userEntityToUserDTO(User user){
-        UserDTO userDTO = new UserDTO();
-        userDTO.setFirst_name(user.getFirst_name());
-        userDTO.setLast_name(user.getLast_name());
-        userDTO.setEmail(user.getEmail());
-        userDTO.setPassword(user.getPassword());
-        userDTO.setRole(user.getRole());
-        return userDTO;
-    }
+//    public static void userEntityToUserDTO(User user){
+//        UserDTO userDTO = new UserDTO();
+//        userDTO.setFirst_name(user.getFirst_name());
+//        userDTO.setLast_name(user.getLast_name());
+//        userDTO.setEmail(user.getEmail());
+//        userDTO.setPassword(user.getPassword());
+//        userDTO.setRole(user.getRole());
+//    }
 }
