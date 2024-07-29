@@ -6,32 +6,26 @@
     <link rel="stylesheet" th:href="@{/css/login.css}" type="text/css">
     <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}" type="text/css"/>
     <script th:src="@{/js/bootstrap.js}"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <link href="//netdna.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
 </head>
 <body style="margin: 20px">
 <link th:include="navbar.html">
-<div class="content">
-    <!-- Success Message -->
-    <div th:if="${message}" class="alert alert-success" role="alert">
-        <strong th:text="${message}"></strong>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-    <br>
-    <br>
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-offset-5 col-md-3">
+                <br>
+                <br>
+                <br>
                 <form th:action="@{/user-login}" method="Post">
                     <div class="form-login">
                         <h1> Admin or Customer Login </h1>
+                        <!-- Error message -->
+                        <p th:if="${errorMessage}" th:text="${errorMessage}" class="error-message"></p>
                         <div class="form-group">
                             <div class="input-group">
                                 <input type="email" name="email" class="form-control" id="email" placeholder="Enter Email Id">
@@ -63,6 +57,5 @@
             </div>
         </div>
     </div>
-</div>
 </body>
 </html>

@@ -51,6 +51,7 @@ public class SecurityConfig {
                         .loginPage("/user-login")
                         .loginProcessingUrl("/user-login")
                         .usernameParameter("email")
+                        .failureUrl("/user-login?error=true")
                         .defaultSuccessUrl("/default", true)
                         .successHandler(customAuthenticationSuccessHandler)
                         .permitAll()
@@ -65,8 +66,4 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable());
         return http.build();
     }
-//    @Autowired
-//    public void configure (AuthenticationManagerBuilder auth) throws Exception{
-//        auth.userDetailsService(customUserDetailsService).passwordEncoder(passwordEncoder());
-//    }
 }

@@ -7,6 +7,7 @@ import com.example.Online.Book.Store.repository.BooksRepository;
 import com.example.Online.Book.Store.repository.UserRepository;
 import com.example.Online.Book.Store.service.CustomUserDetailsService;
 import com.example.Online.Book.Store.service.UserService;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,8 +62,7 @@ public class UserController {
     }
 
     @GetMapping("/view-books")
-    public String getAllBook(@RequestParam(required = false) Long orderId,
-                             @RequestParam(defaultValue = "name") String sortBy,
+    public String getAllBook(@RequestParam(defaultValue = "name") String sortBy,
                              @RequestParam(defaultValue = "asc") String sortDirection,
                              Model model, Principal principal) {
         String userEmail = principal.getName(); // Get the email from Principal
@@ -73,18 +73,11 @@ public class UserController {
         if (user != null) {
             int cartItemCount = userService.getCartItemsCount(user);
             model.addAttribute("cartItemCount", cartItemCount);
-
-            if (orderId == null) {
-                OrderDetails order = userService.getOrCreateOrderForUser(user);
-                orderId = order.getOrder_id();
-            }
-            model.addAttribute("orderId", orderId);
         }
-
         else {
             model.addAttribute("cartItemCount", 0); // Default to 0 if user not found or cart is empty
         }
-        return getBooks(1,orderId, sortBy, sortDirection, model);
+        return getBooks(1, sortBy, sortDirection, model);
     }
     private int calculateStartSerialForPage(int pageNo) {
         int pageSize = 3;
@@ -94,17 +87,10 @@ public class UserController {
 
     @GetMapping("/view-books/page/{pageNo}")
     public String getBooks(@PathVariable("pageNo") int pageNo,
-                           @RequestParam(required = false) Long orderId,
                            @RequestParam(defaultValue = "name") String sortBy,
                            @RequestParam(defaultValue = "asc") String sortDirection,
                            Model model){
         User user = getCartValue(model);
-        if (orderId == null) {
-            // Generate or retrieve an orderId for the user
-            OrderDetails order = userService.getOrCreateOrderForUser(user);
-            orderId = order.getOrder_id();
-        }
-        model.addAttribute("orderId", orderId);
         int pageSize = 3;
         int startSerial = calculateStartSerialForPage(pageNo);
         model.addAttribute("startSerial", startSerial);
@@ -122,7 +108,7 @@ public class UserController {
     }
     @GetMapping("/search")
     public String search(@RequestParam(value = "keyword", required = false) String keyword,
-                         @RequestParam(required = false) Long orderId,Model model) {
+                         Model model) {
         List<BookDTO> books = List.of();
         User user = getCartValue(model);
         if(keyword != null && !keyword.isEmpty()){
@@ -134,7 +120,6 @@ public class UserController {
                 BookDTO book = books.get(0);
                 model.addAttribute("book", book);
                 model.addAttribute("user", user);
-                model.addAttribute("orderId", orderId);
                 model.addAttribute("ratingCount", userService.getTotalRatingsCount(book.getId()));
                 model.addAttribute("reviewCount", userService.getTotalReviewCount(book.getId()));
                 return "user/books-details";
@@ -145,17 +130,16 @@ public class UserController {
         }
         model.addAttribute("user", user);
         model.addAttribute("books",books);
-        model.addAttribute("orderId", orderId);
         model.addAttribute("startSerial", 0);
 
         return "user/search-list";
     }
     @GetMapping("/book/details/{id}")
-    public String bookDetails(@PathVariable("id") Long id, @RequestParam(required = false) Long orderId, Model model){
+    public String bookDetails(@PathVariable("id") Long id,
+                              Model model){
         User user = getCartValue(model);
         model.addAttribute("user", user);
         model.addAttribute("book",userService.getBookDetails(id));
-        model.addAttribute("orderId",orderId);
         model.addAttribute("ratingCount", userService.getTotalRatingsCount(id));
         model.addAttribute("reviewCount", userService.getTotalReviewCount(id));
         return "user/books-details";
@@ -171,7 +155,7 @@ public class UserController {
     @PostMapping("/add-checkout-details")
     public String createCheckoutDetails(@Valid @ModelAttribute("info") ShippingInfoDTO shippingInfoDTO,
                                         BindingResult bindingResult, @RequestParam("quantity") int quantity,
-                                        @RequestParam("amount") Float amount,
+                                        @RequestParam("amount") Float amount, HttpSession session,
                                         Model model) {
         if (bindingResult.hasErrors()) {
             System.out.println("Validation errors found");
@@ -181,13 +165,12 @@ public class UserController {
             getCartValue(model);
             return "user/checkout";
         }
-        userService.saveCheckoutDetails(shippingInfoDTO);
-        User user = getCartValue(model);
-        List<Long> cartItemIds = userService.getCartItemIdsForUser(user);
-        OrderDetails orderDetails = userService.createOrder(shippingInfoDTO, user.getUser_id(), cartItemIds);
+        ShippingInfo shippingInfo = userService.saveCheckoutDetails(shippingInfoDTO);
+        Long shippingId = shippingInfo.getShipping_id();
+        session.setAttribute("shippingId", shippingId);
         model.addAttribute("quantity", quantity);
         model.addAttribute("amount", amount);
-        model.addAttribute("order", orderDetails);
+        model.addAttribute("shippingId", shippingId);
         return "user/checkout-details";
     }
 
@@ -199,15 +182,24 @@ public class UserController {
         return "user/checkout-details";
     }
     @GetMapping("/payment")
-    public String showPaymentPage(Model model) {
-        getCartValue(model);
+    public String showPaymentPage(Model model, HttpSession session) {
+        User user = getCartValue(model);
+        Long shippingInfoId = (Long) session.getAttribute("shippingId");
+        model.addAttribute("user", user);
+        model.addAttribute("shippingId", shippingInfoId);
         return "user/payment";
     }
     @PostMapping("/processPayment")
-    public String processPayment(Model model){
+    public String processPayment(@RequestParam("userId") Long userId, HttpSession session, Model model){
         User user = getCartValue(model);
+        List<Long> cartItemIds = userService.getCartItemIdsForUser(user);
+        Long shippingInfoId = (Long) session.getAttribute("shippingId");
+        ShippingInfo shippingInfo = userService.getShippingId(shippingInfoId);
+        OrderDetails orderDetails = userService.createOrder(shippingInfo, userId, cartItemIds );
+        model.addAttribute("order", orderDetails);
         userService.processCheckout();
         userService.deleteCartItemsByUser(user);
+        session.removeAttribute("shippingInfoId");
         return "redirect:/user/order-success";
 }
     @GetMapping("/order-success")
@@ -285,7 +277,7 @@ public String showReviewForm(Model model) {
         return "user/cart";
     }
     @PostMapping("/cart/add/{userId}")
-    public String addToCart(@PathVariable("userId") Long userId, @RequestParam Long bookId, @RequestParam(required = false) Long orderId,
+    public String addToCart(@PathVariable("userId") Long userId, @RequestParam Long bookId,
                             @ModelAttribute("cartItems") CartItem cartItem, Model model, Principal principal) {
         String email = principal.getName();
         User user1 = userRepository.findByEmail(email).get();
@@ -296,16 +288,9 @@ public String showReviewForm(Model model) {
         if(book.getQuantity() == 0){
             throw new OutOfStockException("The book is out of stock!");
         }
-        if (orderId == null) {
-            OrderDetails newOrder = userService.createOrderForUser(user);
-            orderId = newOrder.getOrder_id();
-        } else {
-            OrderDetails order = userService.getOrderById(orderId);
-            model.addAttribute("order", order);
-        }
         try{
-            userService.addToCart(bookId, userId, orderId);
-            return "redirect:/user/view-modal/" + bookId + "?orderId=" + orderId;
+            userService.addToCart(bookId, userId);
+            return "redirect:/user/view-modal/" + bookId;
         }
         catch (CartServiceUnavailableException ex){
             throw ex;
@@ -322,12 +307,10 @@ public String showReviewForm(Model model) {
         return "redirect:/user/cart";
     }
     @GetMapping("/view-modal/{id}")
-    public String viewModal(@PathVariable("id") Long id, @RequestParam("orderId") Long orderId, Model model){
+    public String viewModal(@PathVariable("id") Long id, Model model){
         model.addAttribute("book", userService.getBookDetails(id));
-        model.addAttribute("orderId", orderId);
         return "user/cartModalView";
     }
-
     @GetMapping("/delete-cart-item/{id}")
     public String deleteCartItem(@PathVariable("id") Long cartId){
         userService.deleteCartItem(cartId);

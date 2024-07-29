@@ -123,5 +123,10 @@ body {
     margin-top: -100px; /* Bottom margin */
     font-size: 17px;
 }
+.error-message {
+    color: #ee0101;
+    font-size: 1.1em;
+    margin-top: 10px;
+}
 
 

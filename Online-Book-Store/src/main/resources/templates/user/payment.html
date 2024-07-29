@@ -9,6 +9,8 @@
 <link th:include="user/userNavbar.html">
 <form id="paymentForm" th:action="@{/user/processPayment}" method="POST">
     <input type="hidden" name="cartItemsList" id="cartItemsInput">
+    <input type="hidden" name="userId" th:value="${user.user_id}">
+    <input type="hidden" name="shippingId" th:value="${shippingId}">
 <div class="payment-container">
 <div class="payment-method">
     <h2>Payment Method <small>(Please select a payment method)</small></h2>

@@ -12,8 +12,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -113,17 +111,14 @@ public class UserService {
     }
 
     @Transactional
-    public void addToCart(Long bookId, Long userId, Long orderId) {
+    public void addToCart(Long bookId, Long userId) {
         Book book = booksRepository.findById(bookId).get();
         User user = userRepository.findById(userId).get();
-        OrderDetails order = orderRepository.findById(orderId).get();
         CartItem cartItem = new CartItem();
         cartItem.setBook(book);
         cartItem.setUser(user);
-        cartItem.setOrder(order);
         CartItem savedItem = cartRepository.save(cartItem);
         this.bookEntityToDTO(savedItem.getBook());
-
     }
     @Transactional
     public void updateCartItem(Long bookId, int quantity) {
@@ -178,10 +173,11 @@ public Double getTotalRatingsCount(Long bookId) {
     }
 
     @Transactional
-    public void saveCheckoutDetails(ShippingInfoDTO shippingInfoDTO) {
+    public ShippingInfo saveCheckoutDetails(ShippingInfoDTO shippingInfoDTO) {
         ShippingInfo shippingInfo = this.modelMapper.map(shippingInfoDTO, ShippingInfo.class);
         shippingInfoRepository.save(shippingInfo);
         this.infoToDTO(shippingInfo);
+        return shippingInfo;
     }
 
     @Transactional(readOnly = true)
@@ -200,16 +196,15 @@ public Double getTotalRatingsCount(Long bookId) {
     }
 
     @Transactional
-    public OrderDetails createOrder(ShippingInfoDTO shippingInfoDTO, Long userId, List<Long> cartItemIds) {
+    public OrderDetails createOrder(ShippingInfo shippingInfo, Long userId, List<Long> cartItemIds) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         List<CartItem> cartItems = cartRepository.findAllById(cartItemIds);
 
-        ShippingInfo info = this.modelMapper.map(shippingInfoDTO, ShippingInfo.class);
-
+        shippingInfo = shippingInfoRepository.saveAndFlush(shippingInfo);
         OrderDetails order = new OrderDetails();
         order.setUser(user);
         order.setOrderDate(new Date());
-        order.setShippingInfo(info);
+        order.setShippingInfo(shippingInfo);
 
         List<OrderItem> orderItems = new ArrayList<>();
         for (CartItem cartItem : cartItems) {
@@ -238,15 +233,7 @@ public Double getTotalRatingsCount(Long bookId) {
                 .map(cartItem -> cartItem.getCardId())
                 .collect(Collectors.toList());
     }
-
-    public OrderDetails createOrderForUser(User user) {
-        OrderDetails order = new OrderDetails();
-        order.setUser(user);
-        order.setOrderDate(new Date());
-        return orderRepository.save(order);
-    }
-
-    public OrderDetails getOrderById(Long orderId) {
-        return orderRepository.findById(orderId).get();
+    public ShippingInfo getShippingId(Long shippingId) {
+        return shippingInfoRepository.findById(shippingId).get();
     }
 }

@@ -22,6 +22,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.nio.file.Paths;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -44,19 +45,21 @@ public class AdminController {
 
     @GetMapping("/order-details")
     public String ShowAllOrders(Model model){
-        List<OrderItem> orderItems = adminService.getAllOrders();
         List<OrderDetails> orderList = adminService.getAllOrderDetails();
-        double totalAmount = 0;
-        for(OrderItem order: orderItems){
-            totalAmount += order.getBook().getPrice() * order.getQuantity();
-
+        Map<Long, Double> orderTotalAmounts = new HashMap<>();
+        for (OrderDetails orderDetails : orderList) {
+            double totalAmount = 0;
+            for (OrderItem orderItem : orderDetails.getOrderItems()) {
+                totalAmount += orderItem.getBook().getPrice() * orderItem.getQuantity();
+            }
+            orderTotalAmounts.put(orderDetails.getOrder_id(), totalAmount + 48);
         }
-        double orderTotalAmounts = totalAmount + 48;
-        model.addAttribute("totalAmount", orderTotalAmounts);
+
         model.addAttribute("orderList", orderList);
-        model.addAttribute("orderItems", orderItems);
+        model.addAttribute("orderTotalAmounts", orderTotalAmounts);
         return "admin/order-details";
     }
+
 
     @GetMapping("/books")
     public String getAllBooks(Model model, Principal principal) {

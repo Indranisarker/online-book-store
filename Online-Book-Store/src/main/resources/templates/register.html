@@ -16,6 +16,7 @@
 <body style="margin: 20px">
 <link th:include="navbar.html">
 <div class="content">
+
     <!-- Success Message -->
     <div th:if="${message}" class="alert alert-success" role="alert">
         <strong th:text="${message}"></strong>
@@ -23,9 +24,14 @@
             <span aria-hidden="true">&times;</span>
         </button>
     </div>
+</div>
     <br>
     <br>
+<br>
+<br>
     <div class="container">
+        <br>
+        <br>
         <div class="row">
             <div class="col-md-offset-5 col-md-3">
                 <form th:action="@{/register-user}" th:object="${user}" method="POST">
@@ -79,6 +85,5 @@
             </div>
         </div>
     </div>
-</div>
 </body>
 </html>

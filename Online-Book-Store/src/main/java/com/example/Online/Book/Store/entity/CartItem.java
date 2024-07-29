@@ -20,10 +20,6 @@ public class CartItem {
     @JoinColumn(name = "book_id")
     private Book book;
 
-    @ManyToOne
-    @JoinColumn(name = "order_id")
-    private OrderDetails order;
-
     private int quantity;
 
 }
