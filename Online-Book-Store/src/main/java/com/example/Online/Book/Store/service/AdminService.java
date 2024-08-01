@@ -40,10 +40,6 @@ public class AdminService {
 
     @Autowired
     private ServiceReviewRepository serviceReviewRepository;
-
-    @Autowired
-    private OrderItemsRepository itemsRepository;
-
     @Autowired
     private ModelMapper modelMapper;
 
@@ -98,7 +94,7 @@ public class AdminService {
             byte[] imageBytes = byteArrayOutputStream.toByteArray();
             byteArrayOutputStream.close();
             Book book = modelMapper.map(bookDTO, Book.class);
-
+            book.setImage(imageBytes);
             Book savedBook = booksRepository.save(book);
             this.bookEntityToDTO(savedBook);
         } catch (IOException e) {
@@ -120,9 +116,6 @@ public class AdminService {
         Book existingBook = booksRepository.findById(id).get();
         Book presentBook = null;
         try {
-            if (existingBook == null) {
-                throw new RuntimeException("Book not found.");
-            }
             MultipartFile file = bookDTO.getImage();
             if (file != null && !file.isEmpty()) {
                 // Define the upload directory relative to the current working directory
@@ -153,28 +146,25 @@ public class AdminService {
                     presentBook.setImagePath(filePath.toString());
                     booksRepository.save(presentBook);
                 }
-
-
+            else{
+                presentBook = modelMapper.map(bookDTO, Book.class);
+                presentBook.setImage(existingBook.getImage());
+                presentBook.setImagePath(existingBook.getImagePath());
+                booksRepository.save(presentBook);
+            }
+            presentBook.setId(existingBook.getId());
              this.bookEntityToDTO(presentBook);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         return bookDTO;
     }
-
         public void deleteBookById(Long id) {
         booksRepository.deleteById(id);
     }
-
-
     public List<ServiceReview> getAllReviews() {
         return serviceReviewRepository.findAll();
     }
-
-    public List<OrderItem> getAllOrders() {
-        return itemsRepository.findAll();
-    }
-
     public List<OrderDetails> getAllOrderDetails() {
         return detailsRepository.findAll();
     }

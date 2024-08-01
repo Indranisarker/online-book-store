@@ -268,6 +268,9 @@ public String showReviewForm(Model model) {
         List<CartItem> cartItems = userService.getCartItemsForUser(user);
         List<BookDTO> bookDTOs = new ArrayList<>();
         for (CartItem i : cartItems) {
+            if (i.getQuantity() == 0) {
+                i.setQuantity(1);
+            }
             bookDTOs.add(this.bookEntityToDTO(i.getBook()));
         }
         model.addAttribute("books", bookDTOs);

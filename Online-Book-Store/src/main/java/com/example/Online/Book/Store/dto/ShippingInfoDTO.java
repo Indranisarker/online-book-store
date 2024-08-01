@@ -14,7 +14,7 @@ public class ShippingInfoDTO {
     private String full_name;
 
     @NotBlank(message = "Phone no is required!")
-    @Min(value = 11, message = "Phone number should have 11 characters")
+    @Size(min = 11, max = 11, message = "Phone number should have exactly 11 characters")
     @Pattern(regexp = "\\d+", message = "Phone number must be numeric")
     private String phone_no;
 

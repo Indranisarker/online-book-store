@@ -44,7 +44,7 @@
                 <button type="button" class="subtractBtn counter-btn" th:data-id="${item.book.id}" onclick="updateQuantity(this, -1)">-</button>
                 <span class="quantity" id="quantity-${item.book.id}" th:text="${item.quantity}">1</span>
                 <button type="button" class="addBtn counter-btn" th:data-id="${item.book.id}" onclick="updateQuantity(this, 1)">+</button>
-                <input type="hidden" name="quantity" th:value="${quantity}">
+                <input type="hidden" name="quantity" th:value="${item.quantity}">
             </form>
         </div>
         <span class="item-price" id="price-${item.book.id}" th:text="${item.book.price * item.quantity}">0</span>
